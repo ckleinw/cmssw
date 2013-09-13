@@ -150,7 +150,6 @@ bool ParametersToParametersDerivatives::init2BowedRigid(const Alignable &compone
   AlgebraicMatrix6_18 derivs;
   derivs.Place_at(derivs1, 0, 0); // left half
   derivs.Place_at(derivs2, 0, 9); // right half
-
   // copy to TMatrix
   derivatives_.ResizeTo(6, 18);
   derivatives_.SetMatrixArray(derivs.begin());
