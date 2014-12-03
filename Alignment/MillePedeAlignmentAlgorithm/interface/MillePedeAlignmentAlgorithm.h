@@ -85,8 +85,8 @@ class MillePedeAlignmentAlgorithm : public AlignmentAlgorithmBase
 
   /// fill mille for a trajectory, returning number of x/y hits ([0,0] if 'bad' trajectory)
   std::pair<unsigned int, unsigned int>
-    addReferenceTrajectory(const EventInfo &eventInfo, 
-			   const ReferenceTrajectoryBase::ReferenceTrajectoryPtr &refTrajPtr);
+    addReferenceTrajectory(const edm::EventSetup &setup, const EventInfo &eventInfo,
+    			   const ReferenceTrajectoryBase::ReferenceTrajectoryPtr &refTrajPtr);
 
   /// If hit is usable: callMille for x and (probably) y direction.
   /// If globalDerivatives fine: returns 2 if 2D-hit, 1 if 1D-hit, 0 if no Alignable for hit.
@@ -94,6 +94,12 @@ class MillePedeAlignmentAlgorithm : public AlignmentAlgorithmBase
   int addMeasurementData(const EventInfo &eventInfo, 
 			 const ReferenceTrajectoryBase::ReferenceTrajectoryPtr &refTrajPtr,
 			 unsigned int iHit, AlignmentParameters *&params);
+
+  /// Add global data (labels, derivatives) to GBL trajectory
+  /// Returns -1 if any problem (for params cf. globalDerivativesHierarchy)
+  int addGlobalData(const edm::EventSetup &setup, const EventInfo &eventInfo,
+                    const ReferenceTrajectoryBase::ReferenceTrajectoryPtr &refTrajPtr,
+                    unsigned int iHit, GblPoint &gblPoint);
 
   /// Increase hit counting of MillePedeVariables behind each parVec[i]
   /// (and also for parameters higher in hierarchy),
@@ -124,6 +130,23 @@ class MillePedeAlignmentAlgorithm : public AlignmentAlgorithmBase
 				  std::vector<float> &globalDerivativesY,
 				  std::vector<int> &globalLabels,
 				  AlignmentParameters *&lowestParams) const;
+
+  /// recursively adding derivatives (double) and labels, false if problems
+  bool globalDerivativesHierarchy(const EventInfo &eventInfo,
+                                  const TrajectoryStateOnSurface &tsos,
+                                  Alignable *ali, const AlignableDetOrUnitPtr &alidet,
+                                  std::vector<double> &globalDerivativesX,
+                                  std::vector<double> &globalDerivativesY,
+                                  std::vector<int> &globalLabels,
+                                  AlignmentParameters *&lowestParams) const;
+
+  /// adding derivatives from integrated calibrations
+  void globalDerivativesCalibration(const TransientTrackingRecHit::ConstRecHitPointer &recHit,
+                                    const TrajectoryStateOnSurface &tsos,
+                                    const edm::EventSetup &setup, const EventInfo &eventInfo,
+                                    std::vector<float> &globalDerivativesX,
+                                    std::vector<float> &globalDerivativesY,
+                                    std::vector<int> &globalLabels) const;
 
   /// calls callMille1D or callMille2D
   int callMille(const ReferenceTrajectoryBase::ReferenceTrajectoryPtr &refTrajPtr,
@@ -205,6 +228,9 @@ class MillePedeAlignmentAlgorithm : public AlignmentAlgorithmBase
   std::vector<float>        theFloatBufferY;
   std::vector<int>          theIntBuffer;
   bool                      theDoSurveyPixelBarrel;
+  // CHK for GBL
+  MilleBinary              *theBinary;
+  bool                      theGblDoubleBinary;
 };
 
 #endif
